@@ -33,13 +33,6 @@ export default function Home() {
             >
               Acessar Sistema
             </Link>
-
-            <Link
-              href="/about"
-              className="px-6 py-3 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition"
-            >
-              Saiba Mais
-            </Link>
           </div>
         </div>
 
