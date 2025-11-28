@@ -82,7 +82,7 @@ const data = {
       items: [
         {
           title: "Visualizar",
-          url: "/dashboard/clientes",
+          url: "/dashboard/cadastros/clientes",
         },
       ],
     },
