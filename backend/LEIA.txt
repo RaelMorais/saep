@@ -4,3 +4,19 @@ rode: python manage.py seed
 
 depois, crie um super user com 
 >> python manage.py createsuperuser
+
+mude o banco e a conexao em settings: 
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'saep_db;',
+        'USER': 'seu_user',
+        'PASSWORD': 'sua_senha',
+        'HOST': 'localhost',
+        'PORT': '3306'
+    }
+}
+
+no workbench crie o banco com: 
+CREATE DATABASE saep_db;
