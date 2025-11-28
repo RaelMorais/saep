@@ -1,0 +1,6 @@
+Para acessar após criar a venv e instalar as libs e estiver em saep
+
+rode: python manage.py seed
+
+depois, crie um super user com 
+>> python manage.py createsuperuser

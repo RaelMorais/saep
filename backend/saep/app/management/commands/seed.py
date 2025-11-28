@@ -1,92 +1,173 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+
 from app.models import (
     Usuario,
     Cliente,
     Log,
-    Produto,
-    Estoque,
     Categoria,
-    MovimentacaoEstoque
+    Estoque,
+    Produto,
+    EstoqueProduto,
+    MovimentacaoEstoque,
 )
 
 
 class Command(BaseCommand):
-    help = "Popula o banco com dados iniciais (seed)"
+    help = "Popula o banco com dados de exemplo (3 de cada entidade e 3 superusers)."
 
-    def handle(self, *args, **kwargs):
-        self.stdout.write(self.style.WARNING("Iniciando seed..."))
+    def handle(self, *args, **options):
+        # ---------- USUÁRIOS (3 SUPERUSERS) ----------
+        admin1, created1 = Usuario.objects.get_or_create(
+            email="admin1@mail.com",
+            defaults={"nome": "Admin 1"},
+        )
+        if created1:
+            admin1.set_password("admin123")
+        admin1.is_staff = True
+        admin1.is_superuser = True
+        admin1.is_active = True
+        admin1.save()
 
-        # ------------------------
-        # USUÁRIO
-        # ------------------------
-        if not Usuario.objects.filter(email="admin@admin.com").exists():
-            user = Usuario.objects.create_superuser(
-                email="admin@admin.com",
-                nome="Administrador",
-                password="admin123"
-            )
-            self.stdout.write(self.style.SUCCESS("Usuário admin criado."))
-        else:
-            user = Usuario.objects.get(email="admin@admin.com")
-            self.stdout.write("Usuário admin já existe.")
+        admin2, created2 = Usuario.objects.get_or_create(
+            email="admin2@example.com",
+            defaults={"nome": "Admin 2"},
+        )
+        if created2:
+            admin2.set_password("admin123")
+        admin2.is_staff = True
+        admin2.is_superuser = True
+        admin2.is_active = True
+        admin2.save()
 
-        # ------------------------
-        # LOG
-        # ------------------------
-        log = Log.objects.create(
-            createdAt=timezone.now(),
-            updateAt=timezone.now(),
-            is_activate=True
+        admin3, created3 = Usuario.objects.get_or_create(
+            email="admin3@example.com",
+            defaults={"nome": "Admin 3"},
+        )
+        if created3:
+            admin3.set_password("admin123")
+        admin3.is_staff = True
+        admin3.is_superuser = True
+        admin3.is_active = True
+        admin3.save()
+
+        # ---------- CLIENTES (3) ----------
+        cliente1, _ = Cliente.objects.get_or_create(
+            email="cliente1@example.com",
+            defaults={"nome": "Cliente Um", "telefone": "11999990001"},
+        )
+        cliente2, _ = Cliente.objects.get_or_create(
+            email="cliente2@example.com",
+            defaults={"nome": "Cliente Dois", "telefone": "11999990002"},
+        )
+        cliente3, _ = Cliente.objects.get_or_create(
+            email="cliente3@example.com",
+            defaults={"nome": "Cliente Três", "telefone": "11999990003"},
         )
 
-        # ------------------------
-        # CLIENTE
-        # ------------------------
-        cliente = Cliente.objects.create(
-            nome="Cliente Teste",
-            email="cliente@teste.com",
-            telefone="11999999999"
+        # ---------- LOGS (3) ----------
+        log1, _ = Log.objects.get_or_create(
+            id=1, defaults={"createdAt": timezone.now(), "is_activate": True}
+        )
+        log2, _ = Log.objects.get_or_create(
+            id=2, defaults={"createdAt": timezone.now(), "is_activate": True}
+        )
+        log3, _ = Log.objects.get_or_create(
+            id=3, defaults={"createdAt": timezone.now(), "is_activate": False}
         )
 
-        # ------------------------
-        # CATEGORIA
-        # ------------------------
-        categoria = Categoria.objects.create(
-            nome="Acessórios",
-            descricao="Itens variados de acessórios"
+        # ---------- CATEGORIAS (3) ----------
+        cat1, _ = Categoria.objects.get_or_create(
+            nome="Smartphones",
+            defaults={"descricao": "Celulares e smartphones em geral"},
+        )
+        cat2, _ = Categoria.objects.get_or_create(
+            nome="Notebooks",
+            defaults={"descricao": "Notebooks e ultrabooks"},
+        )
+        cat3, _ = Categoria.objects.get_or_create(
+            nome="Smart TVs",
+            defaults={"descricao": "Televisores smart de várias marcas"},
         )
 
-        # ------------------------
-        # ESTOQUE
-        # ------------------------
-        estoque = Estoque.objects.create(
-            descricao="Estoque principal",
-            setor="Central",
-            quantidade=100
+        # ---------- ESTOQUES (3) ----------
+        est1, _ = Estoque.objects.get_or_create(
+            setor="Depósito Central",
+            defaults={"descricao": "Depósito principal da loja"},
+        )
+        est2, _ = Estoque.objects.get_or_create(
+            setor="Loja 1",
+            defaults={"descricao": "Estoque da loja física 1"},
+        )
+        est3, _ = Estoque.objects.get_or_create(
+            setor="Loja 2",
+            defaults={"descricao": "Estoque da loja física 2"},
         )
 
-        # ------------------------
-        # PRODUTO
-        # ------------------------
-        produto = Produto.objects.create(
-            nome="Mouse Gamer",
-            descricao="Mouse RGB 16000 DPI",
-            sku="MOUSE-001",
-            id_usuario=user,
-            id_log=log
+        # ---------- PRODUTOS (3) ----------
+        prod1, _ = Produto.objects.get_or_create(
+            sku="SMART-001",
+            defaults={
+                "nome": "Smartphone X",
+                "descricao": "Smartphone de entrada",
+                "id_usuario": admin1,
+                "estoque_minimo": 10,
+            },
+        )
+        prod2, _ = Produto.objects.get_or_create(
+            sku="NOTE-001",
+            defaults={
+                "nome": "Notebook Y",
+                "descricao": "Notebook intermediário",
+                "id_usuario": admin1,
+                "estoque_minimo": 5,
+            },
+        )
+        prod3, _ = Produto.objects.get_or_create(
+            sku="TV-001",
+            defaults={
+                "nome": "Smart TV Z",
+                "descricao": "TV 50 polegadas",
+                "id_usuario": admin2,
+                "estoque_minimo": 3,
+            },
         )
 
-        # ------------------------
-        # MOVIMENTAÇÃO
-        # ------------------------
-        MovimentacaoEstoque.objects.create(
-            id_estoque=estoque,
-            id_categoria=categoria,
-            id_produto=produto,
-            id_cliente=cliente,
-            quantidade=10,
-            movimentedAt=timezone.now()
+        # ---------- ESTOQUEPRODUTO (3) ----------
+        EstoqueProduto.objects.get_or_create(
+            id_estoque=est1, id_categoria=cat1, id_produto=prod1, id_log=log1
+        )
+        EstoqueProduto.objects.get_or_create(
+            id_estoque=est2, id_categoria=cat2, id_produto=prod2, id_log=log2
+        )
+        EstoqueProduto.objects.get_or_create(
+            id_estoque=est3, id_categoria=cat3, id_produto=prod3, id_log=log3
         )
 
-        self.stdout.write(self.style.SUCCESS("Seed finalizado com sucesso! 🎉"))
+        # ---------- MOVIMENTAÇÕES DE ESTOQUE (3) ----------
+        MovimentacaoEstoque.objects.get_or_create(
+            id_produto=prod1,
+            id_estoque=est1,
+            id_cliente=cliente1,
+            quantidade=20,
+            tipo="E",
+            movimentedAt=timezone.now(),
+        )
+        MovimentacaoEstoque.objects.get_or_create(
+            id_produto=prod1,
+            id_estoque=est1,
+            id_cliente=cliente1,
+            quantidade=5,
+            tipo="S",
+            movimentedAt=timezone.now(),
+        )
+        MovimentacaoEstoque.objects.get_or_create(
+            id_produto=prod2,
+            id_estoque=est2,
+            id_cliente=cliente2,
+            quantidade=7,
+            tipo="E",
+            movimentedAt=timezone.now(),
+        )
+
+        self.stdout.write(self.style.SUCCESS("Dados iniciais criados com sucesso."))

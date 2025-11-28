@@ -1,8 +1,7 @@
-Instalar 
+# instala as deps com 
 
-pnpm i 
+pnpm i ou npm i 
 
+# roda com 
 
-Rodar
-
-pnpm run dev
+npm run dev ou pnpm run dev

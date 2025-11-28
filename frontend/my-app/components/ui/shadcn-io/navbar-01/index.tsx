@@ -203,21 +203,6 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
                     <HamburgerIcon />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="start" className="w-48 p-2">
-                  <nav className="flex flex-col gap-1">
-                    {navigationLinks?.map((link) => (
-                      <Link key={link.href} href={link.href}>
-                        <Button
-                          variant={link.active ? "secondary" : "ghost"}
-                          size="sm"
-                          className="w-full justify-start"
-                        >
-                          {link.label}
-                        </Button>
-                      </Link>
-                    ))}
-                  </nav>
-                </PopoverContent>
               </Popover>
             )}
 
@@ -234,27 +219,6 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
               </Link>
 
               {/* Desktop navigation */}
-              {!isMobile && navigationLinks?.length > 0 && (
-                <NavigationMenu>
-                  <NavigationMenuList>
-                    {navigationLinks.map((link) => (
-                      <NavigationMenuItem key={link.href}>
-                        <NavigationMenuLink
-                          asChild
-                          className={cn(
-                            "px-3 py-1.5 text-sm font-medium transition-colors",
-                            link.active
-                              ? "text-primary"
-                              : "text-muted-foreground hover:text-foreground"
-                          )}
-                        >
-                          <Link href={link.href}>{link.label}</Link>
-                        </NavigationMenuLink>
-                      </NavigationMenuItem>
-                    ))}
-                  </NavigationMenuList>
-                </NavigationMenu>
-              )}
             </div>
           </div>
 
@@ -270,16 +234,6 @@ export const Navbar01 = React.forwardRef<HTMLElement, Navbar01Props>(
               {signInText}
             </Button>
 
-            {/* Optional CTA */}
-            {ctaText && (
-              <Button
-                size="sm"
-                className="text-sm font-semibold"
-                onClick={handleCta}
-              >
-                {ctaText}
-              </Button>
-            )}
           </div>
         </div>
       </header>
