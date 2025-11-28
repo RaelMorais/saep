@@ -72,7 +72,7 @@ export function LoginForm({
       localStorage.setItem("user_id", result.user.id);
       localStorage.setItem("user_nome", result.user.nome);
       localStorage.setItem("user_email", result.user.email);
-      router.push("/home");
+      router.push("/dashboard/products");
     } catch (err: any) {
       setErrorMessage(err.message || "Erro ao fazer login");
     }

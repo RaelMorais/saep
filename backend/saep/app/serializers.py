@@ -8,7 +8,6 @@ from .models import (
     Estoque,
     Categoria,
     MovimentacaoEstoque,
-    Usuario,
 )
 
 Usuario = get_user_model()
@@ -58,34 +57,28 @@ class ClienteSerializer(serializers.ModelSerializer):
 class LogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Log
-        fields = "__all__"
+        fields = [
+            "id",
+            "createdAt",
+            "updateAt",
+            "is_activate",
+        ]
 
 
-# 🔹 PRODUTO
 class ProdutoSerializer(serializers.ModelSerializer):
     estoque_atual = serializers.SerializerMethodField()
 
     class Meta:
         model = Produto
-        fields = ["id", "nome", "descricao", "sku", "estoque_atual"]
+        fields = ["id", "nome", "descricao", "sku", "estoque_minimo", "estoque_atual"]
 
     def get_estoque_atual(self, obj):
-        # Usa o método calcular_estoque() do model Produto
         return obj.calcular_estoque()
 
     def create(self, validated_data):
-        """
-        Cria o produto vinculando ao usuário logado.
-        O Log agora NÃO está mais em Produto (está em EstoqueProduto),
-        então não usamos id_log aqui.
-        """
         request = self.context.get("request")
         user = request.user
-
-        produto = Produto.objects.create(
-            id_usuario=user,
-            **validated_data,
-        )
+        produto = Produto.objects.create(id_usuario=user, **validated_data)
         return produto
 
 
@@ -101,7 +94,6 @@ class CategoriaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-# 🔹 MOVIMENTAÇÃO DE ESTOQUE
 class MovimentacaoEstoqueSerializer(serializers.ModelSerializer):
     estoque = EstoqueSerializer(source="id_estoque", read_only=True)
     produto = ProdutoSerializer(source="id_produto", read_only=True)
@@ -112,13 +104,11 @@ class MovimentacaoEstoqueSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "quantidade",
-            "tipo",          # <- não esquece do tipo (E/S)
+            "tipo",
             "movimentedAt",
-
             "id_estoque",
             "id_produto",
             "id_cliente",
-
             "estoque",
             "produto",
             "cliente",

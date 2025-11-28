@@ -1,11 +1,10 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Q
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
-
-from django.contrib.auth import get_user_model
-
 from .permissions import IsActiveUser
 from .models import (
     Cliente,
@@ -29,32 +28,16 @@ from .serializers import (
 Usuario = get_user_model()
 
 
-# ============================================================
-# USUÁRIO / AUTENTICAÇÃO
-# ============================================================
-
 class UsuarioCreateView(generics.CreateAPIView):
-    """
-    Endpoint para cadastro de usuário.
-    Acesso liberado (AllowAny) para permitir que novos usuários se registrem.
-    """
     queryset = Usuario.objects.all()
     permission_classes = [AllowAny]
     serializer_class = UsuarioCreateSerializer
 
 
 class LoginView(TokenObtainPairView):
-    """
-    Endpoint de login JWT.
-    Retorna access e refresh + dados básicos do usuário.
-    """
     serializer_class = CustomLoginSerializer
     permission_classes = [AllowAny]
 
-
-# ============================================================
-# CLIENTE
-# ============================================================
 
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
@@ -63,43 +46,31 @@ class ClienteViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         return Response(
-            {"detail": "Operação de delete não permitida. Use um endpoint de ativação/desativação, se disponível."},
+            {"detail": "Operação de delete não permitida."},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
 
-# ============================================================
-# PRODUTO
-# ============================================================
-
 class ProdutoViewSet(viewsets.ModelViewSet):
-    """
-    Produtos.
-    O serializer usa request.user para setar id_usuario no create.
-    """
-    queryset = Produto.objects.all()
     serializer_class = ProdutoSerializer
-    permission_classes = [IsActiveUser]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = Produto.objects.all()
+        search = self.request.query_params.get("search")
+        if search:
+            qs = qs.filter(
+                Q(nome__icontains=search)
+                | Q(descricao__icontains=search)
+                | Q(sku__icontains=search)
+            )
+        return qs.order_by("nome")
 
     def get_serializer_context(self):
-        """
-        Garante que o `request` esteja disponível no serializer,
-        para o ProdutoSerializer.create conseguir acessar `request.user`.
-        """
         context = super().get_serializer_context()
         context["request"] = self.request
         return context
 
-    def destroy(self, request, *args, **kwargs):
-        return Response(
-            {"detail": "Operação de delete não permitida. Use um endpoint de ativação/desativação, se disponível."},
-            status=status.HTTP_405_METHOD_NOT_ALLOWED,
-        )
-
-
-# ============================================================
-# ESTOQUE
-# ============================================================
 
 class EstoqueViewSet(viewsets.ModelViewSet):
     queryset = Estoque.objects.all()
@@ -113,10 +84,6 @@ class EstoqueViewSet(viewsets.ModelViewSet):
         )
 
 
-# ============================================================
-# CATEGORIA
-# ============================================================
-
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
@@ -129,23 +96,23 @@ class CategoriaViewSet(viewsets.ModelViewSet):
         )
 
 
-# ============================================================
-# MOVIMENTAÇÃO DE ESTOQUE
-# ============================================================
-
 class MovimentacaoEstoqueViewSet(viewsets.ModelViewSet):
-    """
-    Movimentações de estoque (Entrada/Saída).
-    Modelo: MovimentacaoEstoque
-      - id_produto
-      - id_estoque
-      - id_cliente (opcional)
-      - quantidade
-      - tipo: 'E' ou 'S'
-    """
     queryset = MovimentacaoEstoque.objects.all()
     serializer_class = MovimentacaoEstoqueSerializer
     permission_classes = [IsActiveUser]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        movimentacao = serializer.save()
+        produto = movimentacao.id_produto
+        estoque_atual = produto.calcular_estoque()
+        data = self.get_serializer(movimentacao).data
+        data["estoque_atual"] = estoque_atual
+        data["estoque_minimo"] = produto.estoque_minimo
+        data["estoque_abaixo_minimo"] = estoque_atual < produto.estoque_minimo
+        headers = self.get_success_headers(serializer.data)
+        return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
     def destroy(self, request, *args, **kwargs):
         return Response(
@@ -154,10 +121,6 @@ class MovimentacaoEstoqueViewSet(viewsets.ModelViewSet):
         )
 
 
-# ============================================================
-# LOG
-# ============================================================
-
 class LogViewSet(viewsets.ModelViewSet):
     queryset = Log.objects.all()
     serializer_class = LogSerializer
@@ -165,32 +128,22 @@ class LogViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         return Response(
-            {
-                "detail": "Operação de delete não permitida. Use o endpoint de ativar/desativar."
-            },
+            {"detail": "Operação de delete não permitida."},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
     @action(detail=True, methods=["put"], url_path="ativar-desativar")
     def ativar_desativar(self, request, pk=None):
-        """
-        PUT /logs/<id>/ativar-desativar/
-        body: { "is_activate": true/false }
-        """
         log = self.get_object()
         is_activate = request.data.get("is_activate")
-
         if is_activate is None:
             return Response(
                 {"detail": "Campo 'is_activate' é obrigatório."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
         if isinstance(is_activate, str):
             is_activate = is_activate.lower() == "true"
-
         log.is_activate = is_activate
         log.save()
-
         serializer = self.get_serializer(log)
         return Response(serializer.data, status=status.HTTP_200_OK)

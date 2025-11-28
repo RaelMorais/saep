@@ -53,21 +53,25 @@ const data = {
   navMain: [
     {
       title: "Produtos",
-      url: "/prod",
+      url: "",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
           title: "Criar",
-          url: "products/new",
+          url: "/dashboard/products",
         },
         {
+          title: "Movimentação",
+          url: "/dashboard/estoque",
+        },
+         {
           title: "Visualizar",
-          url: "products/view",
+          url: "/dashboard/products/visualizar",
         },
-        {
-          title: "Movimentações",
-          url: "/movimentacao",
+         {
+          title: "Logs",
+          url: "/dashboard/products/logs",
         },
       ],
     },
@@ -78,7 +82,7 @@ const data = {
       items: [
         {
           title: "Visualizar",
-          url: "/clientes",
+          url: "/dashboard/clientes",
         },
       ],
     },
@@ -106,13 +110,17 @@ const data = {
     //   ],
     // },
     {
-      title: "Estoques",
+      title: "Cadastro",
       url: "#",
       icon: Settings2,
       items: [
         {
-          title: "Geral",
-          url: "#",
+          title: "Categoria",
+          url: "/dashboard/cadastros/categoria",
+        },
+        {
+          title: "Warehouse",
+          url: "/dashboard/cadastros/estoque",
         },
       ],
     },
@@ -123,7 +131,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <h1>Saep Tech</h1>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
